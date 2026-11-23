@@ -16,6 +16,40 @@ using UnityEngine;
 // =====================================================================
 public static class ZonaUtil
 {
+    // Busca entre el objeto y sus hijos un BoxCollider marcado como "Is Trigger".
+    // Se usa cuando olvidaste arrastrar la zona en el Inspector. Ignora el collider
+    // SÓLIDO de la mesa (ese no es la zona), que era el que se elegía por error antes.
+    public static BoxCollider BuscarZona(Component dueno)
+    {
+        foreach (BoxCollider c in dueno.GetComponentsInChildren<BoxCollider>())
+        {
+            if (c.isTrigger) return c;
+        }
+        return null;
+    }
+
+    // Mueve "cambio" metros todos los cubos que estén dentro de las zonas dadas
+    // (menos los que el jugador carga). Lo usan las mesas que se mueven, para
+    // que los cubos viajen con ellas y no se queden flotando.
+    public static void Acarrear(BoxCollider[] zonas, Vector3 cambio)
+    {
+        if (zonas == null) return;
+
+        // Un cubo podría estar en dos zonas a la vez: este conjunto evita moverlo doble
+        HashSet<IdentidadProducto> yaMovidos = new HashSet<IdentidadProducto>();
+
+        foreach (BoxCollider zona in zonas)
+        {
+            foreach (IdentidadProducto id in Detectar(zona))
+            {
+                if (id.enMano) continue;
+                if (!yaMovidos.Add(id)) continue;
+
+                id.transform.position += cambio;
+            }
+        }
+    }
+
     public static List<IdentidadProducto> Detectar(BoxCollider zona)
     {
         var lista = new List<IdentidadProducto>();
